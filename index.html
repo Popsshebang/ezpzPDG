@@ -187,7 +187,6 @@ newWindow.document.write($tmp + "<br />");
 
    if (document.getElementById("singlePass").checked) {
        peckDepth = finalDrlDepth;
-
    }
 
 
@@ -440,7 +439,10 @@ if (document.getElementById("holeChkBox8").checked) {
 if (document.getElementById("holeChkBox9").checked) {
 	xCoordArray[arrayCounter] = Number(document.getElementById("x9Coord").value).toFixed(precision);
 	yCoordArray[arrayCounter] = Number(document.getElementById("y9Coord").value).toFixed(precision);
-	// arrayCounter++;
+	// arrayCounter++; 
+	// If this is the last hole, don't increment arrayCounter,
+	//   it tracks the total number of holes to drill and is used 
+	//   in the 'for' loop to parse thru the hole locations.
 }
     
 }
@@ -448,7 +450,6 @@ if (document.getElementById("holeChkBox9").checked) {
 </script>
 
 </head>
-
 
 <body> <noscript>This App requires JavaScript!</noscript>
 
@@ -1178,6 +1179,13 @@ th, td { padding: 0px;}
  <td align="right"><b>&nbsp;-&nbsp;</b></td>
  <td>2. This OVERRIDES the X/Y Park Position.</td>
  </tr>
+
+ <tr>
+ <td align="right"><b>&nbsp;-&nbsp;</b></td>
+ <td>3. Inventables Easel will NOT load a file containing G28.</td>
+ </tr>
+
+
 
  <tr>
  <td align="right"><b> &nbsp;-&nbsp;</b></td><td></td>
