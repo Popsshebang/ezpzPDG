@@ -1,0 +1,1217 @@
+<!DOCTYPE html>  <!-- HTML 5 declaration -->
+<html lang="en">
+
+<head>
+ <meta charset="utf-8"/>
+ <title>Peck Drilling</title>
+
+<style>
+     body {background-color: #FAFAF0;}
+</style>
+
+<script type="text/javascript">
+
+// Global variables
+var newWindow;
+var xCoordArray = [];
+var yCoordArray = [];
+var arrayCounter = 0;
+var drlTipRadians = 0;
+var drlTipLength = 0;
+var finalDrlDepth = 0;
+var zDrlDepth = 0;  // accumalates incremental pecks for next pass
+var zZero = 0;      // machine Z zero should be set to the surface being drilled
+var tmpVar = 0;
+var fullRetractFlag = 0;  // keep track of when to do full retract
+
+function toggleDisablePecking(_checked) {
+
+  if (_checked) {
+      document.getElementById("peckDepth").disabled = true;
+      document.getElementById("chipBrkRetract").disabled = true;
+      document.getElementById("fullRetractDepth").disabled = true;
+      document.getElementById("feedChipRetract").disabled = true;
+  } else {
+      document.getElementById("peckDepth").disabled = false;
+      document.getElementById("chipBrkRetract").disabled = false;
+      document.getElementById("fullRetractDepth").disabled = false;
+      document.getElementById("feedChipRetract").disabled = false;
+  }
+}
+
+function toggleXYParkPosition(_checked) {
+
+  if (_checked) {
+      document.getElementById("xPark").disabled = true;
+      document.getElementById("yPark").disabled = true;
+  } else {
+      document.getElementById("xPark").disabled = false;
+      document.getElementById("yPark").disabled = false;
+  }
+}
+
+// Generate and fill the new window
+
+function makeNewWindow( ) {
+
+ getFormValues( ); // get values from forms
+
+ // Check that drill dia is entered
+ if (drlDia <= 0) {
+    alert("Enter valid drill diameter.");
+    return; 
+ }
+
+ // Check that hole depth is entered
+ if (holeDepth <= 0) {
+    alert("Enter hole depth.\n(ex: 1/2 inch deep, enter .500");
+    return; 
+ }
+
+ // Check that Some Hole Coordinates have been selected/enterd
+    if (xCoordArray.length < 1) {
+       alert("Enter Hole Coordinates and\nselect \'Include\' Checkbox(s)");
+       return; 
+    }
+
+    // make sure it isn't already opened
+    if (!newWindow || newWindow.closed) {
+
+        newWindow = window.open("","_blank","status,height=500 \
+                   ,width=400,toolbar=yes,scrollbars=yes \
+                   ,resizable=yes,top=500,left=500");
+
+//        newWindow = window.open("","sub","status,height=500 \
+//                   ,width=400,toolbar=yes,scrollbars=yes \
+//                   ,resizable=yes,top=500,left=500");
+
+        // handle Navigator 2, which doesn't have an opener property
+        if (!newWindow.opener) {
+            newWindow.opener = window;
+        }
+        // delay writing until window exists in IE/Windows
+        newWindowTitle(); // This works, but the title changes to "untitled"
+        setTimeout("writeToWindow( )", 500);
+    } else if (newWindow.focus) {
+        // window is already open and focusable, so bring it to the front
+        newWindow.focus( );
+    }
+}
+
+function newWindowTitle() {
+ if(newWindow.document) { // if loaded
+      newWindow.document.title = "gCode"; // set newWindow title
+ } else { // if not loaded yet
+      setTimeout(newWindowTitle, 10); // check in another 10ms
+ }
+}
+
+function writeToWindow( ) {
+
+/* -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// -- info for debugging
+newWindow.document.write("$lengthUnits "+ $lengthUnits + "<br />");
+newWindow.document.write(precision + " dec places Precision <br />");
+newWindow.document.write("Drill Dia " + drlDia + "<br />");
+newWindow.document.write("Drill Tip Angle " + drlTipAngle + " degrees<br />");
+newWindow.document.write("Drill Tip Angle " + drlTipRadians + " radians<br />");
+newWindow.document.write("Hole Depth " + holeDepth + "<br />");
+newWindow.document.write("Break Thru Dist " + brkThruDist + "<br />");
+newWindow.document.write("Drill to Tip or Dia = "+ $drlToTipDia + "<br />");
+newWindow.document.write("Drill Tip Length = "+ drlTipLength + "<br />");
+newWindow.document.write("finalDrlDepth = "+ finalDrlDepth + "<br />");
+newWindow.document.write("peckDepth = "+ peckDepth + "<br />");
+newWindow.document.write("chipBrkRetract = "+ chipBrkRetract + "<br />");
+newWindow.document.write("fullRetractDepth = "+ fullRetractDepth + "<br />");
+newWindow.document.write("feedZRapid = "+ feedZRapid + "<br />");
+newWindow.document.write("feedZMove = "+ feedZMove + "<br />");
+newWindow.document.write("feedZCut = "+ feedZCut + "<br />");
+newWindow.document.write("feedChipRetract = "+feedChipRetract + "<br />");
+
+newWindow.document.write("clrFixZHgt = "+ clrFixZHgt + "<br />");
+newWindow.document.write("startDrlZHgt = "+startDrlZHgt + "<br />");
+newWindow.document.write("xPark = "+ xPark + "<br />");
+newWindow.document.write("yPark = "+ yPark + "<br />");
+
+newWindow.document.write("Number of holes / xCoordArray.length "+ xCoordArray.length + "<br />");
+for ( i=0; i < xCoordArray.length; i++) {
+   newWindow.document.write("XY Coords " +  xCoordArray[i]+",   "+ yCoordArray[i] + "<br />");
+}
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+newWindow.document.write("<hr />");
+newWindow.document.write("<b>Cut and paste the following gCode into<br />");
+newWindow.document.write("a plain text editor. Save as filename<u>.nc</u></b><br />");
+newWindow.document.write("(Use ANSI encoding or Plain Text when saving.)<br />");
+newWindow.document.write("<mark>Close this tab/window before creating</mark><br />");
+newWindow.document.write("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+newWindow.document.write("<mark>a new drilling cycle.</mark><br />");
+newWindow.document.write("<hr /><br />");
+
+
+// **************************************************
+// *** Write modal codes and  Safe Start position ***
+// **************************************************
+
+var $tmp = $lengthUnits + " G90";
+newWindow.document.write($tmp + "<br />");
+
+   if (document.getElementById("spindleOn").checked) {
+      $tmp = "M3";
+      newWindow.document.write($tmp + "<br />");
+   }
+
+   if (document.getElementById("codeM7").checked) {
+      $tmp = "M7";
+      newWindow.document.write($tmp + "<br />");
+   }
+
+   if (document.getElementById("codeM8").checked) {
+      $tmp = "M8";
+      newWindow.document.write($tmp + "<br />");
+   }
+
+// -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// if incremental full retract not selected, set fullRetractDepth = finalDrlDepth.
+// Full retract used to intermittently do complete retract from hole to clear chips.
+
+   if ( Number(fullRetractDepth) == 0) {
+      fullRetractDepth = finalDrlDepth;
+   }
+
+
+// -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// if single pass selected, set peckDepth = finalDrlDepth.
+// Just do a single pass, no pecking.
+
+   if (document.getElementById("singlePass").checked) {
+       peckDepth = finalDrlDepth;
+
+   }
+
+
+// **************************************************
+// * MAIN LOOP - Step thru each set of hole coords
+// **************************************************
+
+for ( i=0; i < xCoordArray.length; i++) {
+    newWindow.document.write("( HOLE LOCATION X" +  xCoordArray[i]+",  Y"+ yCoordArray[i] + " )<br />");
+    $tmp = "G1 G94 Z"+ clrFixZHgt + " F" + feedZRapid;
+    newWindow.document.write($tmp + "<br />");
+
+    $tmp = "X"+ xCoordArray[i]+"  Y"+ yCoordArray[i];
+    newWindow.document.write($tmp + "<br />");
+    $tmp = "Z"+startDrlZHgt+" F"+feedZMove;
+    newWindow.document.write($tmp + "<br />");
+
+    zDrlDepth = zZero - Number(peckDepth);
+    zDrlDepth = Number(zDrlDepth.toFixed(precision));
+    fullRetractFlag = Number(0);
+
+    while ( Math.abs(zDrlDepth) < Math.abs(finalDrlDepth) ) {
+               $tmp = "Z"+zDrlDepth+" F"+feedZCut;
+               newWindow.document.write($tmp + "<br />");
+               // chip break
+               tmpVar = Number(zDrlDepth) + Number(chipBrkRetract); // plus (+) retract drill up
+               tmpVar = Number(tmpVar.toFixed(precision));
+               $tmp = "Z"+tmpVar+" F"+feedChipRetract;
+               newWindow.document.write($tmp + "<br />");
+               zDrlDepth -= Number(peckDepth);
+               zDrlDepth = Number(zDrlDepth.toFixed(precision));
+
+               fullRetractFlag += Number(peckDepth);
+               fullRetractFlag = Number(fullRetractFlag.toFixed(precision));
+               if (Math.abs(fullRetractFlag) >= Math.abs(fullRetractDepth)) {
+                   $tmp = "Z"+startDrlZHgt+" F"+feedZMove;
+                   newWindow.document.write($tmp + "<br />");
+                   fullRetractFlag = Number(0);
+                   $tmp = "Z"+tmpVar; // back in hole, pick up where drilling left off
+                   newWindow.document.write($tmp + "<br />");
+               }  // end of IF for fullRetract check
+     }  // end of WHILE loop
+
+     // -------------------------------
+     // do final peck to hole depth
+     // -------------------------------
+
+     $tmp = "Z-"+ finalDrlDepth +" F"+feedZCut;
+     newWindow.document.write($tmp + "<br />");
+
+     // retract Z to safe clear all height
+     $tmp = "Z"+ clrFixZHgt + " F" + feedZRapid;
+     newWindow.document.write($tmp + "<br />");
+
+}  // End of MAIN LOOP (FOR stmt)
+
+newWindow.document.write("(END OF DRILLING CYCLE)" + "<br />");
+
+// **************************************************
+// *** Write  Safe End / XY Park, Spindle Off     ***
+// **************************************************
+
+   // M9 turns off M8/M7 ie. coolant, spray mist, air
+   // or whatever is connected to those control pins
+   if (document.getElementById("codeM9").checked) {
+      $tmp = "M9";
+      newWindow.document.write($tmp + "<br />");
+   }
+
+   if (document.getElementById("spindleOff").checked) {
+      $tmp = "M5";
+      newWindow.document.write($tmp + "<br />");
+   }
+
+   $tmp = $lengthUnits + " G90";
+   newWindow.document.write($tmp + "<br />");
+   $tmp = "G1 G94 Z"+ clrFixZHgt + " F" + feedZRapid;
+   newWindow.document.write($tmp + "<br />");
+
+
+   if (document.getElementById("codeG28").checked) {
+      $tmp = "G28";
+      newWindow.document.write($tmp + "<br />");
+      } else {
+      $tmp = "X" + xPark +" Y" + yPark;
+      newWindow.document.write($tmp + "<br />");
+   }
+
+   if (document.getElementById("endM30").checked) {
+      $tmp = "M30";
+      newWindow.document.write($tmp + "<br />");
+   }
+// **************************************************
+
+newWindow.document.close( ); // close layout stream
+
+} // end of function
+
+// -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+//                 end of writting gCode program
+// -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+
+function getFormValues( ) {  // retrieve values from form
+                             // var already declared by using them in input statements
+
+//----------- machine units G20/G21 inch/mm --------------------
+
+$lengthUnits = document.getElementById("unit").system.value;  //get value of radio buttons **
+
+precision = document.getElementById("unit").places.value; //get value of input text **
+
+//----------- drill bit parameters --------------------
+
+drlDia = Number(document.getElementById("drlDiameter").value); //? why need Number prefix ?
+   drlDia = drlDia.toFixed(precision);
+
+drlTipAngle = Number(document.getElementById("drlTipAngle").value);
+  // Convert drlTipAngle degrees (1/2 of angle) to radians
+  var PI = 3.14593;
+  var tmp = 90 - (drlTipAngle / 2);
+  drlTipRadians = tmp * (PI / 180);
+  drlTipRadians = drlTipRadians.toFixed(3);
+
+holeDepth = Number(document.getElementById("holeDepth").value);
+   holeDepth = holeDepth.toFixed(precision);
+
+brkThruDist = Number(document.getElementById("brkThruDist").value);
+   brkThruDist = brkThruDist.toFixed(precision);
+
+$drlToTipDia = document.getElementById("drlParameters").drlToTipDia.value;
+
+if ($drlToTipDia == "dia" && drlTipAngle > 0)  {
+   drlTipLength = Number(Math.tan(drlTipRadians) * (drlDia / 2));
+} else {
+  drlTipLength = 0;
+}
+drlTipLength = Number(drlTipLength.toFixed(precision));
+
+   // thought holeDepth brkThruDist drlTipLength were already decimal numbers ???
+finalDrlDepth = parseFloat(holeDepth) + parseFloat(brkThruDist) + parseFloat(drlTipLength);
+finalDrlDepth = Number(finalDrlDepth.toFixed(precision));
+
+peckDepth = Number(document.getElementById("peckDepth").value);
+   peckDepth = peckDepth.toFixed(precision);
+
+chipBrkRetract = Number(document.getElementById("chipBrkRetract").value);
+   chipBrkRetract = chipBrkRetract.toFixed(precision);
+
+fullRetractDepth = Number(document.getElementById("fullRetractDepth").value);
+   fullRetractDepth = fullRetractDepth.toFixed(precision);
+
+//-----------       feedrates     --------------------
+
+feedZRapid = Number(document.getElementById("feedZRapid").value);
+   feedZRapid = feedZRapid.toFixed("1");
+
+feedZMove = Number(document.getElementById("feedZMove").value);
+   feedZMove = feedZMove.toFixed("1");
+
+feedZCut = Number(document.getElementById("feedZCut").value);
+   feedZCut = feedZCut.toFixed("1");
+
+feedChipRetract = Number(document.getElementById("feedChipRetract").value);
+   feedChipRetract = feedChipRetract.toFixed("1");
+
+//----------- safe/clear positions, XY Park --------------------
+
+clrFixZHgt = Number(document.getElementById("clrFixZHgt").value);
+   clrFixZHgt = clrFixZHgt.toFixed(precision);
+
+startDrlZHgt = Number(document.getElementById("startDrlZHgt").value);
+   startDrlZHgt = startDrlZHgt.toFixed(precision);
+
+xPark = Number(document.getElementById("xPark").value);
+  xPark =xPark.toFixed(precision);
+
+yPark = Number(document.getElementById("yPark").value);
+  yPark =yPark.toFixed(precision);
+
+// ------------------- X,Y Coordinates ------------------
+
+arrayCounter = 0;
+
+// Clear the array elements
+// This is wonky, but the only 
+// way I could consistantly clear/reset the array.
+//
+xCoordArray = [];
+if (xCoordArray.length > 0) {
+	for (iErase=0; iErase<xCoordArray.length; iErase++)  {
+		xCoordArray.pop();
+		yCoordArray.pop();
+	}
+}
+
+if (document.getElementById("holeChkBox0").checked) {
+	xCoordArray[arrayCounter] = Number(document.getElementById("x0Coord").value).toFixed(precision);
+	yCoordArray[arrayCounter] = Number(document.getElementById("y0Coord").value).toFixed(precision);
+	arrayCounter++;
+}
+
+if (document.getElementById("holeChkBox1").checked) {
+	xCoordArray[arrayCounter] = Number(document.getElementById("x1Coord").value).toFixed(precision);
+	yCoordArray[arrayCounter] = Number(document.getElementById("y1Coord").value).toFixed(precision);
+	arrayCounter++;
+}
+
+if (document.getElementById("holeChkBox2").checked) {
+	xCoordArray[arrayCounter] = Number(document.getElementById("x2Coord").value).toFixed(precision);
+	yCoordArray[arrayCounter] = Number(document.getElementById("y2Coord").value).toFixed(precision);
+	arrayCounter++;
+}
+
+if (document.getElementById("holeChkBox3").checked) {
+	xCoordArray[arrayCounter] = Number(document.getElementById("x3Coord").value).toFixed(precision);
+	yCoordArray[arrayCounter] = Number(document.getElementById("y3Coord").value).toFixed(precision);
+	arrayCounter++;
+}
+
+if (document.getElementById("holeChkBox4").checked) {
+	xCoordArray[arrayCounter] = Number(document.getElementById("x4Coord").value).toFixed(precision);
+	yCoordArray[arrayCounter] = Number(document.getElementById("y4Coord").value).toFixed(precision);
+	arrayCounter++;
+}
+
+if (document.getElementById("holeChkBox5").checked) {
+	xCoordArray[arrayCounter] = Number(document.getElementById("x5Coord").value).toFixed(precision);
+	yCoordArray[arrayCounter] = Number(document.getElementById("y5Coord").value).toFixed(precision);
+	arrayCounter++;
+}
+
+if (document.getElementById("holeChkBox6").checked) {
+	xCoordArray[arrayCounter] = Number(document.getElementById("x6Coord").value).toFixed(precision);
+	yCoordArray[arrayCounter] = Number(document.getElementById("y6Coord").value).toFixed(precision);
+	arrayCounter++;
+}
+
+if (document.getElementById("holeChkBox7").checked) {
+	xCoordArray[arrayCounter] = Number(document.getElementById("x7Coord").value).toFixed(precision);
+	yCoordArray[arrayCounter] = Number(document.getElementById("y7Coord").value).toFixed(precision);
+	arrayCounter++;
+}
+
+if (document.getElementById("holeChkBox8").checked) {
+	xCoordArray[arrayCounter] = Number(document.getElementById("x8Coord").value).toFixed(precision);
+	yCoordArray[arrayCounter] = Number(document.getElementById("y8Coord").value).toFixed(precision);
+	arrayCounter++;
+}
+
+if (document.getElementById("holeChkBox9").checked) {
+	xCoordArray[arrayCounter] = Number(document.getElementById("x9Coord").value).toFixed(precision);
+	yCoordArray[arrayCounter] = Number(document.getElementById("y9Coord").value).toFixed(precision);
+	// arrayCounter++;
+}
+    
+}
+
+</script>
+
+</head>
+
+
+<body> <noscript>This App requires JavaScript!</noscript>
+
+<a id="pageTop"></a>
+
+<table>
+ <tr>
+  <td align="center" style="font-size:18px"><b>&nbsp;
+      PDGezpz &nbsp;- &nbsp;Peck Drilling GCode Generator &nbsp; v0.01beta&nbsp;&nbsp;&nbsp;</b>
+  </td>
+ </tr>
+
+ <tr>
+  <td align="center" style="font-size:12px"><b>Xcarve Ready</b></td>
+ </tr>
+ <tr>
+    <td align="center"><a href="#helpTag"><b>- Help -</b></a>
+ </tr>
+</table>
+<br />
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!--                               F O R M S                             -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<!--~~~~~  Get Machine Units (inch/mm) and decimal precision ~~~~~~~~~~  -->
+
+
+<form id="unit">   <!-- get system units inch/mm -->
+
+  <!-- This style sets the fieldset frame to be just wide
+       enough to encompass the input labels/boxes -->
+<style type="text/css">
+    .fieldset-auto-width {
+         display: inline-block;
+    }
+</style>
+
+<fieldset class="fieldset-auto-width">
+  <legend align="left" >MACHINE UNITS</legend>
+
+         <!-- system is name of the group of radio buttons -->
+  <input type="radio" name="system" value="G20" checked>Inch G20
+  <input type="radio" name="system" value="G21">mm G21    
+
+  &nbsp;&nbsp;|&nbsp;&nbsp; Precision (dec places) :
+  <input type="number" name="places" min="1" max="4" 
+   value="3" style="width: 3em">&nbsp;
+
+</fieldset>
+
+</form> 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+<!-- ~~~~~~~~~~~~~~~  Get Drill Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<br />  <!-- space between tables -->
+
+<form id="drlParameters">  <!-- get drilling parameters, Dia, depths -->
+
+  <!-- This style sets the fieldset frame to be just wide
+       enough to encompass the input labels/boxes -->
+
+<style type="text/css">
+    .fieldset-auto-width {
+         display: inline-block;
+    }
+th, td { padding: 0px;}
+
+<!--  table  { border-collapse: collapse; border-spacing: 0; } -->
+
+</style>
+
+<fieldset class="fieldset-auto-width">
+  <legend align="left" >DRILLING PARAMETERS</legend>
+
+<table>
+<tr>
+ <td align="right">Drill Dia &#8709;&nbsp;</td>
+ <td><input id="drlDiameter" type="number" step="0.015" size="7" min="0" 
+      value="0.125" style="width: 5em" required>
+ </td>
+
+ <td align="right">&nbsp;Drill Tip Angle&#176;&nbsp;</td>
+ <td><input id="drlTipAngle" type="number" step="1" size="7" min="0" 
+      value="118" style="width: 4em">
+ </td>
+</tr>
+
+<tr>
+ <td align="right">Hole Depth&nbsp;</td>
+ <td><input id="holeDepth" type="number" step="0.1" size="7" min="0" 
+      value="0.100" style="width: 5em" required>
+ </td>
+
+ <td align="right">Breakthru Dist&nbsp;</td>
+ <td><input id="brkThruDist" type="number" step="0.001" size="7" min="0" 
+      value=".000" style="width: 4em">
+ </td>
+<tr>
+
+<tr><td>&nbsp;</td></tr> <!-- blank line in table -->
+
+<tr>
+ <td colspan="2" align="right"><mark>'Dia or Tip'</mark> to Hole Depth :&nbsp;</td>
+  
+ <td><input type="radio" name="drlToTipDia" value="dia" checked>Drill Dia &#8709;</td>
+ <td><input type="radio" name="drlToTipDia" value="tip">Drill Tip &#8704;</td>   
+</tr>
+
+
+<!-- ~~~~~~~~~~~ Peck drilling / Chip breaking Parameters ~~~~~~~~ -->
+
+<tr><td>&nbsp;</td></tr> <!-- blank line in table -->
+
+
+<tr><td align="center" colSpan="4">&nbsp;
+-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-&nbsp;</td></tr> <!-- divider line-->
+
+<tr><td>&nbsp;</td></tr> <!-- blank line in table -->
+
+<tr>
+ <td align="right" colspan="2"><b>Single Pass Drl Op</b>&nbsp;</td>
+ <td align="left">><input id="singlePass" onchange="toggleDisablePecking(this.checked)" 
+                  type="checkbox">
+ </td>
+
+<tr><td>&nbsp;</td></tr> <!-- blank line in table -->
+
+<tr>
+ <td align="right">Peck Depth&nbsp;</td>
+ <td><input id="peckDepth" type="number" step="0.001" size="7" min="0" 
+            value="0.015" style="width: 5em" required>
+
+ <td>&nbsp;&nbsp;Chip Brk Retract&nbsp;</td>
+ <td><input id="chipBrkRetract" type="number" step="0.001" size="7" min="0" 
+            value="0.005" style="width: 4em" required>
+</tr>
+
+<tr>
+ <td></td>
+ <td colspan="2" align="right">Full Retract Depth&nbsp;</td>
+ <td><input id="fullRetractDepth" type="number" step="0.010" size="7" min="0" 
+      value="0.125" style="width: 4em" required>
+</tr>
+
+</table>
+</fieldset>
+</form>
+
+
+<!--~~~~~~~~~~~~~~~~~~~~~   Feed Rates ~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<br /> <!-- space between tables -->
+
+<form id="feedRates">   <!-- get  feedrates ~~~~~~~~~~~~~~~~~~~ -->
+
+  <!-- This style sets the fieldset frame to be just wide
+       enough to encompass the input labels/boxes -->
+
+<style type="text/css">
+    .fieldset-auto-width {
+         display: inline-block;
+    }
+    th, td { padding: 0px;}
+</style>
+
+<fieldset class="fieldset-auto-width">
+  <legend align="left" >FEEDRATES ( in IPM )</legend>
+
+<table>
+<tr>
+ <td align="right">Z Rapid&nbsp;</td>
+ <td><input id="feedZRapid" type="number" step="any" size="7" min="0" 
+      value="400" style="width: 5em" required>
+ </td>
+
+ <td align="right">&nbsp;Z Positioning Feed&nbsp;</td>
+ <td><input id="feedZMove" type="number" step="any" size="7" min="0" 
+      value="200" style="width: 4em">
+ </td>
+</tr>
+
+<tr>
+ <td align="right">Drill Feedrate&nbsp;</td>
+ <td><input id="feedZCut" type="number" step="any" size="7" min="0" 
+      value="50" style="width: 5em" required>
+ </td>
+
+ <td>&nbsp;&nbsp;Chipbreak Retract Feed&nbsp;</td>
+ <td><input id="feedChipRetract" type="number" step="any" size="7" min="0" 
+      value="100" style="width: 4em">
+ </td>
+<tr>
+
+</table>
+</fieldset>
+</form>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~   Safe Positions ~~~~~~~~~~~~~~~~~~~~ -->
+
+<br />  <!-- space between tables -->
+
+<form id="SafePositions">  <!-- get safe Z rapid height, XY-park ~~ -->
+
+  <!-- This style sets the fieldset frame to be just wide
+       enough to encompass the input labels/boxes -->
+
+<style type="text/css">
+    .fieldset-auto-width {
+         display: inline-block;
+    }
+    th, td { padding: 0px;}
+</style>
+
+<fieldset class="fieldset-auto-width">
+  <legend align="left" >Safe Rapid Height / XY Park</legend>
+
+<table>
+<tr>
+ <td align="right">Z Clear All Hgt&nbsp;</td>
+ <td><input id="clrFixZHgt" type="number" step="any" size="7" min="0" 
+      value="1.000" style="width: 5em" required>
+ </td>
+
+ <td align="right">&nbsp;Drilling Start Height&nbsp;</td>
+ <td><input id="startDrlZHgt" type="number" step="any" size="7" min="0" 
+      value=".125" style="width: 4em">
+ </td>
+</tr>
+
+<tr>
+ <td align="right">X Park Position&nbsp;</td>
+ <td><input id="xPark" type="number" step="any" size="7" 
+      value="1.000" style="width: 5em" required>
+ </td>
+
+ <td align="right">Y Park Position&nbsp;</td>
+ <td><input id="yPark" type="number" step="any" size="7" 
+      value="4.000" style="width: 4em" required>
+ </td>
+</tr>
+
+<tr><td align="center" colSpan="4">&nbsp;
+-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-</td></tr>
+
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+ <td><b><mark>Caution!</mark></b></td>
+ <td colSpan="3">If you don't know how to set</td>
+</tr>
+
+<tr>
+ <td>&nbsp;</td>
+ <td colSpan="3">up G28 for PARK position,</td>
+</tr>
+
+<tr>
+ <td>&nbsp;</td>
+ <td colSpan="3">- Leave it unchecked! -&nbsp;&nbsp;&nbsp;</td>
+</tr>
+
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+ <td colspan="3" align="right">Use G28 for PARK Position&nbsp;(G28)&nbsp;&nbsp;</td>
+ <td align="left"><input id="codeG28" type="checkbox" 
+                   onchange="toggleXYParkPosition(this.checked)"> </td>
+</tr>
+
+<tr>
+ <td colSpan=3 align="right">(Overrides XY Park Position)&nbsp;&nbsp;</td>
+</tr>
+
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+ <td colSpan=4 rowSpan="2" align="center">
+   Inventables Easel will NOT load a file containing G28</td>
+</tr>
+
+</table>
+</fieldset>
+</form>
+
+<!-- ~~~~~~~~~~~~~~~~  Auxillary Code Options ~~~~~~~~~~~~~~~~ -->
+
+<br />  <!-- space between tables -->
+
+<form id="modalOptions">   <!-- optional modal settings ~~~ -->
+
+<!-- This style sets the fieldset frame to be just wide 
+     enough to encompass the input labels/boxes          -->
+
+<style type="text/css">
+    .fieldset-auto-width {
+         display: inline-block;
+    }
+    th, td { padding: 0px;}
+</style>
+
+<fieldset class="fieldset-auto-width">
+  <legend align="left" >Auxillary Code Options</legend>
+
+<table>
+
+<tr>
+ <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+ <td colSpan=2 align="right">Program Start - Spindle On&nbsp;&nbsp;&nbsp;(M3)&nbsp;&nbsp;</td>
+ <td align="left"><input id="spindleOn" type="checkbox" checked>
+ </td>
+
+<tr>
+ <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+ <td colSpan=2 align="right">Program End - Spindle Off&nbsp;&nbsp;&nbsp;(M5)&nbsp;&nbsp;</td>
+ <td align="left"><input id="spindleOff" type="checkbox" checked>
+ </td>
+</tr>
+
+<tr>
+ <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+ <td colSpan=2 align="right">Program Start - Insert&nbsp;&nbsp;&nbsp;(M7)&nbsp;&nbsp;</td>
+ <td align="left"><input id="codeM7" type="checkbox">
+ </td>
+</tr>
+
+<tr>
+ <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+ <td colSpan=2 align="right">Program Start - Insert&nbsp;&nbsp;&nbsp;(M8)&nbsp;&nbsp;</td>
+ <td align="left"><input id="codeM8" type="checkbox">
+ </td>
+</tr>
+
+<tr>
+ <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+ <td colSpan=2 align="right">Program End - Insert&nbsp;&nbsp;&nbsp;(M9)&nbsp;&nbsp;</td>
+ <td align="left"><input id="codeM9" type="checkbox" checked>
+ </td>
+</tr>
+
+<tr>
+ <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+ <td colSpan=2 align="right">Program End - Code&nbsp;(M30)&nbsp;&nbsp;</td>
+ <td align="left"><input id="endM30" type="checkbox" checked>
+ </td>
+</tr>
+
+</table>
+</fieldset>
+</form>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~  XY Coordinates ~~~~~~~~~~~~~~~~ -->
+
+<br />  <!-- space between tables -->
+
+<form id="xyCoords">   <!-- XY Hole Coordinates ~~~ -->
+
+  <!-- This style sets the fieldset frame to be just wide
+       enough to encompass the input labels/boxes -->
+
+<style type="text/css">
+    .fieldset-auto-width {
+         display: inline-block;
+    }
+    th, td { padding: 0px;}
+</style>
+
+<fieldset class="fieldset-auto-width">
+  <legend align="left" >X/Y Hole Coordinates</legend>
+
+<table>
+<tr>
+	<td>&nbsp;Hole&nbsp;</td>
+	<td align="center">X Coord&nbsp;&nbsp;</td>
+	<td align="center">Y Coord&nbsp;&nbsp;</td>
+	<td align="center">Include</td>
+</tr>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<tr>
+ <td align="center">0 <!-- Hole number -->
+ </td>
+ <td><input id="x0Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
+ </td>
+ <td><input id="y0Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;
+ </td>
+ <td align="center"><input id="holeChkBox0" type="checkbox" checked>
+ </td>
+</tr>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<tr>
+ <td align="center">1 <!-- Hole number -->
+ </td>
+ <td><input id="x1Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
+ </td>
+ <td><input id="y1Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;
+ </td>
+ <td align="center"><input id="holeChkBox1" type="checkbox">
+ </td>
+</tr>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<tr>
+ <td align="center">2 <!-- Hole number -->
+ </td>
+ <td><input id="x2Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
+ </td>
+ <td><input id="y2Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;
+ </td>
+ <td align="center"><input id="holeChkBox2" type="checkbox">
+ </td>
+</tr>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<tr>
+ <td align="center">3 <!-- Hole number -->
+ </td>
+ <td><input id="x3Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
+ </td>
+ <td><input id="y3Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;
+ </td>
+ <td align="center"><input id="holeChkBox3" type="checkbox">
+ </td>
+</tr>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<tr>
+ <td align="center">4 <!-- Hole number -->
+ </td>
+ <td><input id="x4Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
+ </td>
+ <td><input id="y4Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;
+ </td>
+ <td align="center"><input id="holeChkBox4" type="checkbox">
+ </td>
+</tr>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<tr>
+ <td align="center">5 <!-- Hole number -->
+ </td>
+ <td><input id="x5Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
+ </td>
+ <td><input id="y5Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;
+ </td>
+ <td align="center"><input id="holeChkBox5" type="checkbox">
+ </td>
+</tr>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<tr>
+ <td align="center">6 <!-- Hole number -->
+ </td>
+ <td><input id="x6Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
+ </td>
+ <td><input id="y6Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;
+ </td>
+ <td align="center"><input id="holeChkBox6" type="checkbox">
+ </td>
+</tr>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<tr>
+ <td align="center">7 <!-- Hole number -->
+ </td>
+ <td><input id="x7Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
+ </td>
+ <td><input id="y7Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;
+ </td>
+ <td align="center"><input id="holeChkBox7" type="checkbox">
+ </td>
+</tr>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<tr>
+ <td align="center">8 <!-- Hole number -->
+ </td>
+ <td><input id="x8Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
+ </td>
+ <td><input id="y8Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;
+ </td>
+ <td align="center"><input id="holeChkBox8" type="checkbox">
+ </td>
+</tr>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<tr>
+ <td align="center">9 <!-- Hole number -->
+ </td>
+ <td><input id="x9Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
+ </td>
+ <td><input id="y9Coord" type="number" step="any" size="7" 
+      value="00.000" style="width: 5em">&nbsp;&nbsp;
+ </td>
+ <td align="center"><input id="holeChkBox9" type="checkbox">
+ </td>
+</tr>
+
+</table>
+</fieldset>
+</form> 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<!-- return false prevents "Enter key" from reloading/clearing the webpage -->
+<form class="form-horizontal" onSubmit="return false;"> 
+
+    <!-- If you want a step value between -1 and 1, then you *must* have a  !!!
+         leading 0 before the decimal place. 
+         step=.2 will be ignored by all browsers which support number/range inputs
+         ie. use step=0.2
+    -->
+</form>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<br />
+
+<form>
+<table>
+ <tr>
+   <td>&nbsp;</td>
+   <td colspan="2" align="center">
+    <mark>(If open, close the gCode Tab/Window first)</mark></td>
+ </tr>
+
+ <tr>
+  <td>&nbsp;</td>
+  <td colspan="2" align="center">
+     <input style="height: 50px; width: 275px; 
+      color:black;background-color:lime; font-size:18px" 
+      type="button" value="Generate PeckDrill gCode" 
+      onclick="makeNewWindow( );">
+  </td>
+ </tr>
+</table>
+</form>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~ Help Text Area ~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<hr align="left" width="479" />
+<a id="helpTag"></a>
+
+<br />
+<table>
+ <tr>
+  <td></td>
+  <td align="left"><em><b>&nbsp;&nbsp;&nbsp;Help</b></em>
+ </td>
+
+ <tr>
+  <td align="right"><b>YouTube Demo&nbsp;-&nbsp;</b></td>
+  <td><a href="https://youtu.be/aLrERf2VLvk" target="_blank">Peck Drilling Demo</a></td>
+ </tr>
+
+ <tr>
+  <td align="right"><b>Units&nbsp;-&nbsp;</b></td>
+  <td>Select Inch or mm system</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Drill Diameter&nbsp;-&nbsp;</b></td><td>Diameter of Drill ;-)</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Drill Tip Angle&nbsp;-&nbsp;</b></td>
+ <td>Included Angle of Drill point (use 0 for Flatbottom).</td>
+ </tr>
+ <tr>
+ <td align="right"><b> &nbsp;-&nbsp;</b></td>
+ <td>Standard drill point angle is 118&#176;</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Hole Depth&nbsp;-&nbsp;</b></td><td>Depth to drill hole (positive number)</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Breakthru Distance&nbsp;-&nbsp;</b></td>
+ <td>Added to Hole Depth. When drilling through, this is</td>
+ </tr>
+ <tr>
+ <td align="right"><b> &nbsp;&nbsp;</b></td>
+ <td>used to take the drill past the bottom of stock.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b> &nbsp;-&nbsp;</b></td><td></td> <!-- Seperator -->
+ </tr>
+
+ <tr>
+ <td align="right"><b>Dia -or- Tip&nbsp;-&nbsp;</b></td>
+ <td>Whether to take the drill tip or drill diameter to Hole Depth.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Single Pass Drilling&nbsp;-&nbsp;</b></td>
+ <td>Drill hole(s) in single pass. Overrides Peck Depth.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Peck Depth&nbsp;-&nbsp;</b></td>
+ <td>Incremental peck depth before backing off to break the chip.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Chip Brk Retract&nbsp;-&nbsp;</b></td>
+ <td>Distance to back off to break the chip.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Full Retrack Depth&nbsp;-&nbsp;</b></td>
+ <td>Depth of drilling pass before complete retrack from hole.</td>
+ </tr>
+ <tr>
+ <td align="right"><b> &nbsp;&nbsp;</b></td>
+ <td>Used to clear chips from hole, then continue peck drilling cycle.</td>
+ </tr>
+ <tr>
+ <td align="right"><b> &nbsp;&nbsp;</b></td>
+ <td>Set to Zero (0) for no full retract.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b> &nbsp;-&nbsp;</b></td><td></td> <!-- Seperator -->
+ </tr>
+
+ <tr>
+ <td align="right"><b>Z Rapid Feed&nbsp;-&nbsp;</b></td>
+ <td>Use High Feedrate vs G0. Saves wear and tear on machine.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Z Positioning Feed&nbsp;-&nbsp;</b></td>
+ <td>Feedrate for positioning before cut move.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Drill Feedrate&nbsp;-&nbsp;</b></td>
+ <td>Drilling feedrate.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Chipbreak Retract Feed&nbsp;-&nbsp;</b></td>
+ <td>Feedrate for Chipbreak Retract.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b> &nbsp;-&nbsp;</b></td><td></td> <!-- Seperator -->
+ </tr>
+
+ <tr>
+ <td align="right"><b>Z Clear All&nbsp;-&nbsp;</b></td>
+ <td>Safe distance above part (Z zero), clamps and fixtures</td>
+ </tr>
+ <tr>
+ <td align="right"><b> &nbsp;&nbsp;</b></td>
+ <td>that tip of tool can move freely.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Drill Starting Height&nbsp;-&nbsp;</b></td>
+ <td>Distance above part (Z zero) to begin drill cycle.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>X/Y Park Position&nbsp;-&nbsp;</b></td>
+ <td>When all drilling is done, move to this park position.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Spindle On M3&nbsp;-&nbsp;</b></td>
+ <td>Include M3 at start of program.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Spindle Off M5&nbsp;-&nbsp;</b></td>
+ <td>Include M5 at end of program.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Program Start M7, M8&nbsp;-&nbsp;</b></td>
+ <td>Include M7 and/or M8 at start of program.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Program Start M9&nbsp;-&nbsp;</b></td>
+ <td>Include M9 at end of program. (cancel M7/M8)</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>End Of Program M30&nbsp;-&nbsp;</b></td>
+ <td>End program with M30.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>Use G28 park position&nbsp;-&nbsp;</b></td>
+ <td>End program with G28.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>&nbsp;-&nbsp;</b></td>
+ <td>1. G28 must be setup before using this!</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b>&nbsp;-&nbsp;</b></td>
+ <td>2. This OVERRIDES the X/Y Park Position.</td>
+ </tr>
+
+ <tr>
+ <td align="right"><b> &nbsp;-&nbsp;</b></td><td></td>
+ </tr>
+
+
+ <tr><td colspan="2" style="font-size:10px">
+<pre>
+THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
+SHALL ANY PARTY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF 
+USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. <mark>USE AT YOUR OWN RISK.</mark>
+</pre>
+</td></tr>
+
+ <tr>
+ <td align="right"><b> &nbsp;-&nbsp;</b></td>
+ <td></td>
+ </tr>
+
+</table>
+
+<div align="left">
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <a href="#pageTop"><b>- Top Of Page -</b></a>
+</div>
+
+</body>
+</html>
