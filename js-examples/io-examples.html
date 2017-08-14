@@ -53,6 +53,7 @@
     var reader = new FileReader();
     reader.onload = function(e) {
       elem('content').value = reader.result;
+      elem('save-name').value = file.name;
     }
     reader.readAsText(file);
   }
