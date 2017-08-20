@@ -56,19 +56,19 @@ function makeNewWindow( ) {
  // Check that drill dia is entered
  if (drlDia <= 0) {
     alert("Enter valid drill diameter.");
-    return; 
+    return;
  }
 
  // Check that hole depth is entered
  if (holeDepth <= 0) {
     alert("Enter hole depth.\n(ex: 1/2 inch deep, enter .500");
-    return; 
+    return;
  }
 
  // Check that Some Hole Coordinates have been selected/enterd
     if (xCoordArray.length < 1) {
        alert("Enter Hole Coordinates and\nselect \'Include\' Checkbox(s)");
-       return; 
+       return;
     }
 
     // make sure it isn't already opened
@@ -368,7 +368,7 @@ yPark = Number(document.getElementById("yPark").value);
 arrayCounter = 0;
 
 // Clear the array elements
-// This is wonky, but the only 
+// This is wonky, but the only
 // way I could consistantly clear/reset the array.
 //
 xCoordArray = [];
@@ -436,12 +436,12 @@ if (document.getElementById("holeChkBox8").checked) {
 if (document.getElementById("holeChkBox9").checked) {
 	xCoordArray[arrayCounter] = Number(document.getElementById("x9Coord").value).toFixed(precision);
 	yCoordArray[arrayCounter] = Number(document.getElementById("y9Coord").value).toFixed(precision);
-	// arrayCounter++; 
+	// arrayCounter++;
 	// If this is the last hole, don't increment arrayCounter,
-	//   it tracks the total number of holes to drill and is used 
+	//   it tracks the total number of holes to drill and is used
 	//   in the 'for' loop to parse thru the hole locations.
 }
-    
+
 }
 
 </script>
@@ -482,15 +482,15 @@ if (document.getElementById("holeChkBox9").checked) {
 
          <!-- system is name of the group of radio buttons -->
   <input type="radio" name="system" value="G20" checked>Inch G20
-  <input type="radio" name="system" value="G21">mm G21    
+  <input type="radio" name="system" value="G21">mm G21
 
   &nbsp;&nbsp;|&nbsp;&nbsp; Precision (dec places) :
-  <input type="number" name="places" min="1" max="4" 
+  <input type="number" name="places" min="1" max="4"
    value="3" style="width: 3em">&nbsp;
 
 </fieldset>
 
-</form> 
+</form>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
@@ -506,24 +506,24 @@ if (document.getElementById("holeChkBox9").checked) {
 <table>
 <tr>
  <td align="right">Drill Dia &#8709;&nbsp;</td>
- <td><input id="drlDiameter" type="number" step="0.015" size="7" min="0" 
+ <td><input id="drlDiameter" type="number" step="0.015" size="7" min="0"
       value="0.125" style="width: 5em" required>
  </td>
 
  <td align="right">&nbsp;Drill Tip Angle&#176;&nbsp;</td>
- <td><input id="drlTipAngle" type="number" step="1" size="7" min="0" 
+ <td><input id="drlTipAngle" type="number" step="1" size="7" min="0"
       value="118" style="width: 4em">
  </td>
 </tr>
 
 <tr>
  <td align="right">Hole Depth&nbsp;</td>
- <td><input id="holeDepth" type="number" step="0.1" size="7" min="0" 
+ <td><input id="holeDepth" type="number" step="0.1" size="7" min="0"
       value="0.100" style="width: 5em" required>
  </td>
 
  <td align="right">Breakthru Dist&nbsp;</td>
- <td><input id="brkThruDist" type="number" step="0.001" size="7" min="0" 
+ <td><input id="brkThruDist" type="number" step="0.001" size="7" min="0"
       value=".000" style="width: 4em">
  </td>
 <tr>
@@ -532,9 +532,9 @@ if (document.getElementById("holeChkBox9").checked) {
 
 <tr>
  <td colspan="2" align="right"><mark>'Dia or Tip'</mark> to Hole Depth :&nbsp;</td>
-  
+
  <td><input type="radio" name="drlToTipDia" value="dia" checked>Drill Dia &#8709;</td>
- <td><input type="radio" name="drlToTipDia" value="tip">Drill Tip &#8704;</td>   
+ <td><input type="radio" name="drlToTipDia" value="tip">Drill Tip &#8704;</td>
 </tr>
 
 
@@ -550,7 +550,7 @@ if (document.getElementById("holeChkBox9").checked) {
 
 <tr>
  <td align="right" colspan="2"><b>Single Pass Drl Op</b>&nbsp;</td>
- <td align="left">><input id="singlePass" onchange="toggleDisablePecking(this.checked)" 
+ <td align="left">><input id="singlePass" onchange="toggleDisablePecking(this.checked)"
                   type="checkbox">
  </td>
 
@@ -558,18 +558,18 @@ if (document.getElementById("holeChkBox9").checked) {
 
 <tr>
  <td align="right">Peck Depth&nbsp;</td>
- <td><input id="peckDepth" type="number" step="0.001" size="7" min="0" 
+ <td><input id="peckDepth" type="number" step="0.001" size="7" min="0"
             value="0.015" style="width: 5em" required>
 
  <td>&nbsp;&nbsp;Chip Brk Retract&nbsp;</td>
- <td><input id="chipBrkRetract" type="number" step="0.001" size="7" min="0" 
+ <td><input id="chipBrkRetract" type="number" step="0.001" size="7" min="0"
             value="0.005" style="width: 4em" required>
 </tr>
 
 <tr>
  <td></td>
  <td colspan="2" align="right">Full Retract Depth&nbsp;</td>
- <td><input id="fullRetractDepth" type="number" step="0.010" size="7" min="0" 
+ <td><input id="fullRetractDepth" type="number" step="0.010" size="7" min="0"
       value="0.125" style="width: 4em" required>
 </tr>
 
@@ -590,24 +590,24 @@ if (document.getElementById("holeChkBox9").checked) {
 <table>
 <tr>
  <td align="right">Z Rapid&nbsp;</td>
- <td><input id="feedZRapid" type="number" step="any" size="7" min="0" 
+ <td><input id="feedZRapid" type="number" step="any" size="7" min="0"
       value="400" style="width: 5em" required>
  </td>
 
  <td align="right">&nbsp;Z Positioning Feed&nbsp;</td>
- <td><input id="feedZMove" type="number" step="any" size="7" min="0" 
+ <td><input id="feedZMove" type="number" step="any" size="7" min="0"
       value="200" style="width: 4em">
  </td>
 </tr>
 
 <tr>
  <td align="right">Drill Feedrate&nbsp;</td>
- <td><input id="feedZCut" type="number" step="any" size="7" min="0" 
+ <td><input id="feedZCut" type="number" step="any" size="7" min="0"
       value="50" style="width: 5em" required>
  </td>
 
  <td>&nbsp;&nbsp;Chipbreak Retract Feed&nbsp;</td>
- <td><input id="feedChipRetract" type="number" step="any" size="7" min="0" 
+ <td><input id="feedChipRetract" type="number" step="any" size="7" min="0"
       value="100" style="width: 4em">
  </td>
 <tr>
@@ -628,24 +628,24 @@ if (document.getElementById("holeChkBox9").checked) {
 <table>
 <tr>
  <td align="right">Z Clear All Hgt&nbsp;</td>
- <td><input id="clrFixZHgt" type="number" step="any" size="7" min="0" 
+ <td><input id="clrFixZHgt" type="number" step="any" size="7" min="0"
       value="1.000" style="width: 5em" required>
  </td>
 
  <td align="right">&nbsp;Drilling Start Height&nbsp;</td>
- <td><input id="startDrlZHgt" type="number" step="any" size="7" min="0" 
+ <td><input id="startDrlZHgt" type="number" step="any" size="7" min="0"
       value=".125" style="width: 4em">
  </td>
 </tr>
 
 <tr>
  <td align="right">X Park Position&nbsp;</td>
- <td><input id="xPark" type="number" step="any" size="7" 
+ <td><input id="xPark" type="number" step="any" size="7"
       value="1.000" style="width: 5em" required>
  </td>
 
  <td align="right">Y Park Position&nbsp;</td>
- <td><input id="yPark" type="number" step="any" size="7" 
+ <td><input id="yPark" type="number" step="any" size="7"
       value="4.000" style="width: 4em" required>
  </td>
 </tr>
@@ -674,7 +674,7 @@ if (document.getElementById("holeChkBox9").checked) {
 
 <tr>
  <td colspan="3" align="right">Use G28 for PARK Position&nbsp;(G28)&nbsp;&nbsp;</td>
- <td align="left"><input id="codeG28" type="checkbox" 
+ <td align="left"><input id="codeG28" type="checkbox"
                    onchange="toggleXYParkPosition(this.checked)"> </td>
 </tr>
 
@@ -768,10 +768,10 @@ if (document.getElementById("holeChkBox9").checked) {
 <tr>
  <td align="center">0 <!-- Hole number -->
  </td>
- <td><input id="x0Coord" type="number" step="any" size="7" 
+ <td><input id="x0Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
  </td>
- <td><input id="y0Coord" type="number" step="any" size="7" 
+ <td><input id="y0Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;
  </td>
  <td align="center"><input id="holeChkBox0" type="checkbox" checked>
@@ -782,10 +782,10 @@ if (document.getElementById("holeChkBox9").checked) {
 <tr>
  <td align="center">1 <!-- Hole number -->
  </td>
- <td><input id="x1Coord" type="number" step="any" size="7" 
+ <td><input id="x1Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
  </td>
- <td><input id="y1Coord" type="number" step="any" size="7" 
+ <td><input id="y1Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;
  </td>
  <td align="center"><input id="holeChkBox1" type="checkbox">
@@ -796,10 +796,10 @@ if (document.getElementById("holeChkBox9").checked) {
 <tr>
  <td align="center">2 <!-- Hole number -->
  </td>
- <td><input id="x2Coord" type="number" step="any" size="7" 
+ <td><input id="x2Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
  </td>
- <td><input id="y2Coord" type="number" step="any" size="7" 
+ <td><input id="y2Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;
  </td>
  <td align="center"><input id="holeChkBox2" type="checkbox">
@@ -810,10 +810,10 @@ if (document.getElementById("holeChkBox9").checked) {
 <tr>
  <td align="center">3 <!-- Hole number -->
  </td>
- <td><input id="x3Coord" type="number" step="any" size="7" 
+ <td><input id="x3Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
  </td>
- <td><input id="y3Coord" type="number" step="any" size="7" 
+ <td><input id="y3Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;
  </td>
  <td align="center"><input id="holeChkBox3" type="checkbox">
@@ -824,10 +824,10 @@ if (document.getElementById("holeChkBox9").checked) {
 <tr>
  <td align="center">4 <!-- Hole number -->
  </td>
- <td><input id="x4Coord" type="number" step="any" size="7" 
+ <td><input id="x4Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
  </td>
- <td><input id="y4Coord" type="number" step="any" size="7" 
+ <td><input id="y4Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;
  </td>
  <td align="center"><input id="holeChkBox4" type="checkbox">
@@ -838,10 +838,10 @@ if (document.getElementById("holeChkBox9").checked) {
 <tr>
  <td align="center">5 <!-- Hole number -->
  </td>
- <td><input id="x5Coord" type="number" step="any" size="7" 
+ <td><input id="x5Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
  </td>
- <td><input id="y5Coord" type="number" step="any" size="7" 
+ <td><input id="y5Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;
  </td>
  <td align="center"><input id="holeChkBox5" type="checkbox">
@@ -852,10 +852,10 @@ if (document.getElementById("holeChkBox9").checked) {
 <tr>
  <td align="center">6 <!-- Hole number -->
  </td>
- <td><input id="x6Coord" type="number" step="any" size="7" 
+ <td><input id="x6Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
  </td>
- <td><input id="y6Coord" type="number" step="any" size="7" 
+ <td><input id="y6Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;
  </td>
  <td align="center"><input id="holeChkBox6" type="checkbox">
@@ -866,10 +866,10 @@ if (document.getElementById("holeChkBox9").checked) {
 <tr>
  <td align="center">7 <!-- Hole number -->
  </td>
- <td><input id="x7Coord" type="number" step="any" size="7" 
+ <td><input id="x7Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
  </td>
- <td><input id="y7Coord" type="number" step="any" size="7" 
+ <td><input id="y7Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;
  </td>
  <td align="center"><input id="holeChkBox7" type="checkbox">
@@ -880,10 +880,10 @@ if (document.getElementById("holeChkBox9").checked) {
 <tr>
  <td align="center">8 <!-- Hole number -->
  </td>
- <td><input id="x8Coord" type="number" step="any" size="7" 
+ <td><input id="x8Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
  </td>
- <td><input id="y8Coord" type="number" step="any" size="7" 
+ <td><input id="y8Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;
  </td>
  <td align="center"><input id="holeChkBox8" type="checkbox">
@@ -894,10 +894,10 @@ if (document.getElementById("holeChkBox9").checked) {
 <tr>
  <td align="center">9 <!-- Hole number -->
  </td>
- <td><input id="x9Coord" type="number" step="any" size="7" 
+ <td><input id="x9Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;&nbsp;&nbsp;
  </td>
- <td><input id="y9Coord" type="number" step="any" size="7" 
+ <td><input id="y9Coord" type="number" step="any" size="7"
       value="00.000" style="width: 5em">&nbsp;&nbsp;
  </td>
  <td align="center"><input id="holeChkBox9" type="checkbox">
@@ -906,15 +906,15 @@ if (document.getElementById("holeChkBox9").checked) {
 
 </table>
 </fieldset>
-</form> 
+</form>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 <!-- return false prevents "Enter key" from reloading/clearing the webpage -->
-<form class="form-horizontal" onSubmit="return false;"> 
+<form class="form-horizontal" onSubmit="return false;">
 
     <!-- If you want a step value between -1 and 1, then you *must* have a  !!!
-         leading 0 before the decimal place. 
+         leading 0 before the decimal place.
          step=.2 will be ignored by all browsers which support number/range inputs
          ie. use step=0.2
     -->
@@ -934,9 +934,9 @@ if (document.getElementById("holeChkBox9").checked) {
  <tr>
   <td>&nbsp;</td>
   <td colspan="2" align="center">
-     <input style="height: 50px; width: 275px; 
-      color:black;background-color:lime; font-size:18px" 
-      type="button" value="Generate PeckDrill gCode" 
+     <input style="height: 50px; width: 275px;
+      color:black;background-color:lime; font-size:18px"
+      type="button" value="Generate PeckDrill gCode"
       onclick="makeNewWindow( );">
   </td>
  </tr>
@@ -1130,12 +1130,12 @@ if (document.getElementById("holeChkBox9").checked) {
 
  <tr><td colspan="2" style="font-size:10px">
 <pre>
-THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
-SHALL ANY PARTY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF 
-USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+SHALL ANY PARTY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. <mark>USE AT YOUR OWN RISK.</mark>
 </pre>
 </td></tr>
