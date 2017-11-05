@@ -8,6 +8,10 @@ body {
      display: inline-block;
 }
 
+.fieldset-fixed-width {
+     width: 27em;
+}
+
 th, td {
   padding: 0;
 }
