@@ -1,5 +1,5 @@
 # ezpzPDG
-https://popsshebang.github.io/ezpzPDG/
+https://popsshebang.github.io/ezpzPDG/   
 Generate G-Code program for peck drilling holes.  
   
 Enter up to 10 X/Y Hole Coordinates. 
@@ -18,6 +18,6 @@ If more than 10 holes needed, either concatenate 2 files
 or use dxfPDG.  dxfPDG reads the hole locations from a dxf drawing file. 
 
 # dxfPDG
-https://popsshebang.github.io/ezpzPDG/dxfPDGv.01alpha.html
+https://popsshebang.github.io/ezpzPDG/dxfPDGv.01alpha.html   
 Reads hole locations from a 2D dxf file. Then generates and displays  
 gCode file. When satisified with settings, save gCode to file.
