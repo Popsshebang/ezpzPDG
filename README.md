@@ -14,7 +14,8 @@ Examine code. When ready, click button below text widow to save gCode to file.
 Note: X-carve uses the filename extension ".nc"
 
 If more than 10 holes needed, either concatenate 2 files
-or use dxfPDG.   
-dxfPDG reads the hole locations from a dxf drawing file. 
+or use dxfPDG.  dxfPDG reads the hole locations from a dxf drawing file. 
 
 # dxfPDG
+Reads hole locations from a 2D dxf file. Then generates and displays  
+gCode file. When satisified with settings, save gCode to file.
