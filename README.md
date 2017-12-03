@@ -1,5 +1,6 @@
-# ezpzPDG
-https://popsshebang.github.io/ezpzPDG/   
+# ezpzPDG - depriciated
+# please see https://popsshebang.github.io/PDG/   
+
 Generate G-Code program for peck drilling holes.  
   
 Enter up to 10 X/Y Hole Coordinates. 
