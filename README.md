@@ -1,5 +1,7 @@
 # ezpzPDG - depriciated
-# please see https://popsshebang.github.io/PDG/   
+# please see https://github.com/Popsshebang/PDG
+
+or go to https://popsshebang.github.io/PDG/   
 
 Generate G-Code program for peck drilling holes.  
   
